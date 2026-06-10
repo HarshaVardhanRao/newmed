@@ -3,7 +3,9 @@ from collections import defaultdict
 from app.retrieval.bm25_search import BM25Retriever
 from app.retrieval.embeddings import embed_texts
 from app.retrieval.vector_store import collection
+import time
 
+from app.reranking.reranker import rerank
 
 class HybridRetriever:
 
@@ -54,15 +56,21 @@ class HybridRetriever:
         top_k: int = 5
     ):
 
+        start = time.time()
         bm25_results = self.bm25.search(
             query,
             top_k=10
         )
+        print("BM25:", round(time.time() - start, 2), "sec")
 
+        start = time.time()
         semantic_results = self.semantic_search(
             query,
             top_k=10
         )
+        print("Semantic:", round(time.time() - start, 2), "sec")
+
+
 
         combined = defaultdict(
             lambda: {
@@ -112,15 +120,19 @@ class HybridRetriever:
             reverse=True
         )
 
-        from app.reranking.reranker import rerank
+        
 
         candidates = [
-            item["data"]
-            for item in final_results[:20]
+        item["data"]
+        for item in final_results[:10]
         ]
 
-        return rerank(
-            query=query,
-            chunks=candidates,
-            top_k=top_k
-        )
+        start = time.time()
+        reranked = rerank(
+                query=query,
+                chunks=candidates,
+                top_k=top_k
+                )
+        print("Rerank:", round(time.time() - start, 2), "sec")
+
+        return reranked

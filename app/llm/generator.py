@@ -9,12 +9,25 @@ def generate_answer(
 
     context_text = ""
 
-    for idx, chunk in enumerate(contexts, start=1):
+    MAX_CHARS = 1000
+
+    for idx, chunk in enumerate(
+        contexts[:3],
+        start=1
+    ):
 
         context_text += (
             f"\n\nSOURCE {idx}\n"
-            f"{chunk}"
+            f"{chunk[:MAX_CHARS]}"
         )
+
+    print(
+        f"Context count: {min(len(contexts),3)}"
+    )
+
+    print(
+        f"Context chars: {len(context_text)}"
+    )
 
     prompt = f"""
 {SYSTEM_PROMPT}
