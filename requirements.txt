@@ -1,0 +1,15 @@
+fastapi
+uvicorn
+chromadb
+sentence-transformers
+rank-bm25
+transformers
+torch
+pymupdf
+pydantic
+python-dotenv
+ollama
+ragas
+numpy
+pandas
+pytest

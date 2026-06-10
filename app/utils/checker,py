@@ -1,0 +1,14 @@
+import json
+
+with open(
+    "data/processed/chunks.json",
+    "r",
+    encoding="utf-8"
+) as f:
+    chunks = json.load(f)
+
+lengths = [len(c["text"].split()) for c in chunks]
+
+print(min(lengths))
+print(max(lengths))
+print(sum(lengths)/len(lengths))

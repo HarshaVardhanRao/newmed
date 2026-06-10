@@ -1,0 +1,22 @@
+# Virtual environment
+venv/
+.venv/
+
+# Python
+__pycache__/
+*.pyc
+
+# ChromaDB
+chroma_store/
+*.sqlite3
+
+# Data
+data/
+*.pdf
+
+# Model caches
+.cache/
+models/
+
+# Environment variables
+.env
