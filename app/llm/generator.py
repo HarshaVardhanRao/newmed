@@ -1,4 +1,4 @@
-from app.llm.ollama_client import generate
+from app.llm.ollama_client import call_ollama
 from app.llm.prompts import SYSTEM_PROMPT
 
 
@@ -9,10 +9,10 @@ def generate_answer(
 
     context_text = ""
 
-    MAX_CHARS = 1000
+    MAX_CHARS = 1500
 
     for idx, chunk in enumerate(
-        contexts[:3],
+        contexts[:5],
         start=1
     ):
 
@@ -41,4 +41,4 @@ CONTEXT:
 ANSWER:
 """
 
-    return generate(prompt)
+    return call_ollama(prompt)

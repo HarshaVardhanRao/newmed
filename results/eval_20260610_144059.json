@@ -1,0 +1,29 @@
+{
+    "questions_evaluated": 10,
+    "retrieval": {
+        "Precision@5": 0.5999999999999999,
+        "Recall@5": 1.0,
+        "MRR": 1.0,
+        "NDCG@5": 1.0,
+        "HitRate@5": 1.0
+    },
+    "generation": {
+        "BLEU-1": 0.2649315513686881,
+        "BLEU-2": 0.18885394792789456,
+        "BLEU-4": 0.12966297688391143,
+        "GLEU": 0.15939886574327616,
+        "ROUGE-1": 0.4134767412047742,
+        "ROUGE-2": 0.22934501116764486,
+        "ROUGE-L": 0.337511117912274,
+        "METEOR": 0.3805867672622424,
+        "Answer-F1": 0.36004663708017437,
+        "BERTScore": 0.8859811663627625
+    },
+    "rag_metrics": {
+        "Faithfulness": 0.8859811663627625,
+        "Context Relevancy": 1.0,
+        "Answer Relevancy": 0.8859811663627625,
+        "Hallucination Rate": 0.11401883363723753
+    },
+    "avg_latency_sec": 17.48786609172821
+}

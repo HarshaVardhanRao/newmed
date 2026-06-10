@@ -1,32 +1,45 @@
 import requests
+import re
+import time
 
 OLLAMA_URL = "http://localhost:11434/api/generate"
 
-MODEL = "qwen3:8b"  # change if needed
 
-import time
-
-def generate(prompt: str):
+def call_ollama(prompt):
 
     start = time.time()
+
     response = requests.post(
         OLLAMA_URL,
         json={
-            "model": MODEL,
+            "model": "qwen2.5:1.5b",
             "prompt": prompt,
             "stream": False,
             "options": {
-            "num_predict": 120,
-            "temperature": 0.1
+                "temperature": 0.1,
+                "num_predict": 512
             }
-        },
-        timeout=300
+        }
     )
-    print(
-    "Ollama API:",
-    round(time.time()-start,2),
-    "sec"
-    )
-    response.raise_for_status()
 
-    return response.json()["response"]
+    print(
+        "Ollama API:",
+        round(time.time() - start, 2),
+        "sec"
+    )
+
+    data = response.json()
+
+    print("RAW RESPONSE:")
+    print(data)
+
+    answer = data.get("response", "")
+
+    answer = re.sub(
+        r"<think>.*?</think>",
+        "",
+        answer,
+        flags=re.DOTALL
+    )
+
+    return answer.strip()

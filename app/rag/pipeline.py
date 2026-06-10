@@ -30,8 +30,10 @@ def ask(question: str):
     print("Generation:", round(time.time() - start, 2), "sec")
 
     return {
-        "answer": answer,
-        "sources": results
+    "answer": answer,
+    "sources": results,
+    "retrieved_docs": contexts,
+    "retrieval_count": len(results)
     }
 
 
