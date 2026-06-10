@@ -6,6 +6,15 @@ from app.retrieval.vector_store import collection
 import time
 
 from app.reranking.reranker import rerank
+from app.agents.query_analyzer import (
+    analyze_query
+)
+from app.agents.retrieval_planner import (
+    plan_retrieval
+)
+
+
+
 
 class HybridRetriever:
 
@@ -53,20 +62,64 @@ class HybridRetriever:
     def search(
         self,
         query: str,
-        top_k: int = 5
+        top_k: int = 8
     ):
 
+        analysis = analyze_query(query)
+
+        print(
+            f"Intent: {analysis['intent']}"
+        )
+
+        print(
+            f"Complexity: {analysis['complexity']}"
+        )
+
+        print(
+            f"Emotion: {analysis['emotion']}"
+        )
+
+        intent = analysis["intent"]
+
+        plan = plan_retrieval(
+            analysis
+        )
+
+        print(
+            "Retrieval Plan:",
+            plan
+        )
+
+        bm25_k = plan[
+            "bm25_k"
+        ]
+
+        semantic_k = plan[
+            "semantic_k"
+        ]
+
+        candidate_pool = plan[
+            "candidate_pool"
+        ]
+
+        rerank_top_k = plan[
+            "rerank_top_k"
+        ]
+
         start = time.time()
+
+
+
         bm25_results = self.bm25.search(
             query,
-            top_k=10
+            top_k=bm25_k
         )
         print("BM25:", round(time.time() - start, 2), "sec")
 
         start = time.time()
         semantic_results = self.semantic_search(
             query,
-            top_k=10
+            top_k=semantic_k
         )
         print("Semantic:", round(time.time() - start, 2), "sec")
 
@@ -90,7 +143,7 @@ class HybridRetriever:
             chunk_id = chunk["chunk_id"]
 
             combined[chunk_id]["score"] += (
-                1 / rank
+                plan["bm25_weight"] / rank
             )
 
             combined[chunk_id]["data"] = chunk
@@ -104,7 +157,7 @@ class HybridRetriever:
             chunk_id = item["chunk_id"]
 
             combined[chunk_id]["score"] += (
-                1 / rank
+                plan["semantic_weight"] / rank
             )
 
             combined[chunk_id]["data"] = {
@@ -122,17 +175,28 @@ class HybridRetriever:
 
         
 
+        candidate_pool = 30
+
+        if analysis["complexity"] == "moderate":
+            candidate_pool = 40
+
+        elif analysis["complexity"] == "complex":
+            candidate_pool = 50
+
         candidates = [
-        item["data"]
-        for item in final_results[:10]
+            item["data"]
+            for item in final_results[:candidate_pool]
         ]
 
         start = time.time()
         reranked = rerank(
-                query=query,
-                chunks=candidates,
-                top_k=top_k
-                )
+            query=query,
+            chunks=candidates,
+            top_k=rerank_top_k
+        )
         print("Rerank:", round(time.time() - start, 2), "sec")
 
-        return reranked
+        return {
+            "analysis": analysis,
+            "results": reranked
+        }

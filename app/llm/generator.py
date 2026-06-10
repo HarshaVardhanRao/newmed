@@ -9,10 +9,10 @@ def generate_answer(
 
     context_text = ""
 
-    MAX_CHARS = 1500
+    MAX_CHARS = 800
 
     for idx, chunk in enumerate(
-        contexts[:5],
+        contexts[:4],
         start=1
     ):
 
@@ -30,7 +30,16 @@ def generate_answer(
     )
 
     prompt = f"""
-{SYSTEM_PROMPT}
+You are a medical oncology assistant.
+
+RULES:
+
+1. Use ONLY information present in CONTEXT.
+2. Do NOT use outside knowledge.
+3. If answer is not found, say:
+   "Information not found in provided sources."
+4. Be concise.
+5. Quote specific facts from context.
 
 QUESTION:
 {question}
@@ -40,5 +49,4 @@ CONTEXT:
 
 ANSWER:
 """
-
     return call_ollama(prompt)

@@ -1,45 +1,25 @@
 from typing import List
 from pydantic import BaseModel
+
 from app.utils.text_cleaner import clean_text
 
-import re
+from app.ingestion.agentic_chunker import (
+    split_into_sections,
+    chunk_section
+)
 
 
 class Chunk(BaseModel):
-
     chunk_id: str
-
     book: str
-
     page: int
-
     text: str
-
-
-NOISE_PATTERNS = [
-    "exercise",
-    "review questions",
-    "references",
-    "bibliography",
-    "index",
-    "answer key"
-]
-
-
-def is_noise(text: str):
-
-    text = text.lower()
-
-    return any(
-        noise in text
-        for noise in NOISE_PATTERNS
-    )
 
 
 def chunk_text(
     text: str,
-    chunk_size: int = 150,
-    overlap: int = 30
+    chunk_size: int = 500,
+    overlap: int = 200
 ):
 
     words = text.split()
@@ -77,39 +57,57 @@ def create_chunks(documents):
             doc["text"]
         )
 
-        if is_noise(text):
-            continue
+        # ------------------------
+        # Agentic Chunking
+        # ------------------------
 
-        text_chunks = chunk_text(
+        sections = split_into_sections(
             text
         )
 
+        text_chunks = []
+
+        for section in sections:
+
+            text_chunks.extend(
+                chunk_section(
+                    section,
+                    chunk_size=400,
+                    overlap=50
+                )
+            )
+
+        # ------------------------
+        # Save chunks
+        # ------------------------
+
         for chunk in text_chunks:
 
-            if len(chunk.split()) < 50:
-                continue
-
-            lower_chunk = chunk.lower()
-
-            if re.match(
-                r"^(fig|figure|table)\s+\d+",
-                lower_chunk
-            ):
+            if len(
+                chunk.split()
+            ) < 50:
                 continue
 
             all_chunks.append(
+
                 Chunk(
-                    chunk_id=f"chunk_{chunk_counter}",
-                    book=doc["book"],
-                    page=doc["page"],
-                    text=chunk
+
+                    chunk_id=
+                    f"chunk_{chunk_counter}",
+
+                    book=
+                    doc["book"],
+
+                    page=
+                    doc["page"],
+
+                    text=
+                    chunk
+
                 ).model_dump()
+
             )
 
             chunk_counter += 1
-
-    print(
-        f"Created {len(all_chunks)} chunks"
-    )
 
     return all_chunks

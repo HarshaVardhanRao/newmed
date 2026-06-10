@@ -1,12 +1,12 @@
 from sentence_transformers import CrossEncoder
 
 reranker = CrossEncoder(
-    "cross-encoder/ms-marco-MiniLM-L-6-v2",
+    "BAAI/bge-reranker-base",
     device="cuda"
 )
 
 
-def rerank(query, chunks, top_k=5):
+def rerank(query, chunks, top_k=4):
 
     pairs = [
         (query, chunk["text"])

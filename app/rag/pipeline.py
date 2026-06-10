@@ -7,6 +7,10 @@ from app.llm.generator import (
 )
 
 import time
+from app.agents.response_optimizer import (
+    optimizer
+)
+
 
 retriever = HybridRetriever()
 
@@ -14,26 +18,79 @@ retriever = HybridRetriever()
 def ask(question: str):
 
     start = time.time()
-    results = retriever.search(question, top_k=3)
-    print("Retrieval:", round(time.time() - start, 2), "sec")
+
+    search_results = retriever.search(
+        question,
+        top_k=8
+    )
+    analysis = search_results["analysis"]
+    retrieved_results = search_results["results"]
+
+    optimized_results = optimizer.optimize(
+    retrieved_results,
+    question
+)
+
+    print(
+        "Retrieval:",
+        round(time.time() - start, 2),
+        "sec"
+    )
+
+
+    print(
+        "Query Analysis:",
+        analysis
+    )
+
+    print(
+        "Retrieved:",
+        len(retrieved_results)
+    )
+
+    print(
+        "After Optimization:",
+        len(optimized_results)
+    )
 
     contexts = [
         r["text"]
-        for r in results
+        for r in optimized_results
     ]
 
     start = time.time()
+
     answer = generate_answer(
         question,
         contexts
     )
-    print("Generation:", round(time.time() - start, 2), "sec")
+
+    print(
+        "Generation:",
+        round(time.time() - start, 2),
+        "sec"
+    )
+    print("\nRETRIEVED CONTEXTS\n")
+
+    for i, c in enumerate(contexts, start=1):
+
+        print("\n" + "=" * 80)
+
+        print(f"CHUNK {i}")
+
+        print(c[:1000])
 
     return {
-    "answer": answer,
-    "sources": results,
-    "retrieved_docs": contexts,
-    "retrieval_count": len(results)
+
+        "answer": answer,
+
+        "analysis": analysis,
+
+        "sources": optimized_results,
+
+        "retrieved_docs": contexts,
+
+        "retrieval_count": len(optimized_results)
     }
 
 
@@ -49,6 +106,14 @@ if __name__ == "__main__":
             break
 
         result = ask(question)
+
+        print(
+            "\nQUERY ANALYSIS:\n"
+        )
+
+        print(
+            result["analysis"]
+        )
 
         print(
             "\nANSWER:\n"
@@ -72,3 +137,5 @@ if __name__ == "__main__":
                 f"{source['book']} "
                 f"(Page {source['page']})"
             )
+
+    
