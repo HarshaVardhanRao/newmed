@@ -12,7 +12,7 @@ def call_ollama(prompt):
     response = requests.post(
         OLLAMA_URL,
         json={
-            "model": "qwen2.5:3b",
+            "model": "qwen2.5:1.5b",
             "prompt": prompt,
             "stream": False,
             "options": {

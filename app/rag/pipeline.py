@@ -1,6 +1,21 @@
 from app.retrieval.hybrid_search import (
     HybridRetriever
 )
+from app.agents.confidence_agent import (
+    confidence_agent
+)
+
+from app.agents.evidence_verifier import (
+    verifier
+)
+
+from app.agents.reflection_agent import (
+    reflector
+)
+
+from app.agents.self_critique_agent import (
+    self_critique_agent
+)
 
 from app.llm.generator import (
     generate_answer
@@ -27,9 +42,28 @@ def ask(question: str):
     retrieved_results = search_results["results"]
 
     optimized_results = optimizer.optimize(
-    retrieved_results,
-    question
-)
+        retrieved_results,
+        question,
+        analysis
+        )
+    
+    verified_results = verifier.verify(
+        optimized_results,
+        analysis
+    )
+    if analysis["complexity"] == "simple":
+
+        verified_results = verified_results[:2]
+
+    elif analysis["complexity"] == "moderate":
+
+        verified_results = verified_results[:4]
+
+    else:
+
+        verified_results = verified_results[:6]
+    if not verified_results:
+        verified_results = optimized_results[:2]
 
     print(
         "Retrieval:",
@@ -53,16 +87,44 @@ def ask(question: str):
         len(optimized_results)
     )
 
+    print(
+        "After Verification:",
+        len(verified_results)
+    )
+    confidence = confidence_agent.score(
+        analysis,
+        retrieved_results,
+        verified_results
+    )
+    
+    print(
+        "Confidence:",
+        confidence
+    )
     contexts = [
         r["text"]
-        for r in optimized_results
+        for r in verified_results
     ]
 
     start = time.time()
 
+    # Generate first
     answer = generate_answer(
         question,
+        contexts,
+        analysis
+    )
+
+    # Then reflect
+    answer = reflector.reflect(
+        question,
+        answer,
         contexts
+    )
+    answer = self_critique_agent.critique(
+        question,
+        answer,
+        confidence
     )
 
     print(
@@ -79,18 +141,15 @@ def ask(question: str):
         print(f"CHUNK {i}")
 
         print(c[:1000])
+        
+    
 
     return {
-
-        "answer": answer,
-
-        "analysis": analysis,
-
-        "sources": optimized_results,
-
-        "retrieved_docs": contexts,
-
-        "retrieval_count": len(optimized_results)
+    "answer": answer,
+    "analysis": analysis,
+    "confidence": round(confidence, 2),
+    "sources": verified_results,
+    "retrieved_docs": contexts
     }
 
 

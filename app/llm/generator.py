@@ -4,7 +4,8 @@ from app.llm.prompts import SYSTEM_PROMPT
 
 def generate_answer(
     question: str,
-    contexts: list[str]
+    contexts: list[str],
+    analysis: dict
 ):
 
     context_text = ""
@@ -27,18 +28,62 @@ def generate_answer(
     print(
         f"Context chars: {len(context_text)}"
     )
+    intent = analysis.get(
+        "intent",
+        "general"
+    )
+
+    if intent == "diagnosis":
+
+        answer_style = """
+Start with a clear definition.
+Then explain important characteristics.
+Then mention incidence or risk factors if available.
+"""
+
+    elif intent == "treatment":
+
+        answer_style = """
+    Focus on treatment options.
+    Mention therapies and management strategies.
+    """
+
+    elif intent == "prognosis":
+
+        answer_style = """
+    Focus on survival, outcomes, recurrence,
+    and prognosis-related information.
+    """
+
+    else:
+
+        answer_style = """
+    Answer directly using the provided evidence.
+    """
 
     prompt = f"""
 You are a medical oncology assistant.
 
 RULES:
 
-1. Use ONLY the provided context.
-2. Summarize relevant information found in the context.
-3. If the answer is partially available, provide the partial answer.
-4. Combine information from multiple sources when needed.
-5. Only say "Information not found in provided sources"
-   if absolutely no relevant information exists.
+Use ONLY information explicitly present in CONTEXT.
+
+Do NOT infer missing facts.
+
+Do NOT add risk factors,
+genes,
+treatments,
+survival statistics,
+or pathology details
+unless directly mentioned.
+
+If a fact is not explicitly stated,
+write:
+
+"Not mentioned in provided sources."
+
+ANSWER STYLE:
+{answer_style}
 
 QUESTION:
 {question}

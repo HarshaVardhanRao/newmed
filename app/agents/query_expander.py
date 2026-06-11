@@ -30,6 +30,7 @@ def expand_query(
             "epidemiology "
             "etiology"
         )
+    
     elif intent == "prognosis":
 
         expanded += (

@@ -1,8 +1,7 @@
 from sentence_transformers import CrossEncoder
 
 reranker = CrossEncoder(
-    "cross-encoder/ms-marco-MiniLM-L-12-v2",
-    device="cuda"
+    "cross-encoder/ms-marco-MiniLM-L-12-v2"
 )
 
 

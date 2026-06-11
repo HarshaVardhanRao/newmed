@@ -41,11 +41,31 @@ SECTION_BOOSTS = {
         "complications"
     ]
 }
+
+DIAGNOSIS_SECTIONS = [
+    "definition",
+    "introduction",
+    "overview",
+    "epidemiology",
+    "etiology",
+    "pathology",
+    "what is",
+    "case definition"
+]
+
+BAD_FOR_DIAGNOSIS = [
+    "pregnancy",
+    "treatment",
+    "management",
+    "radiotherapy",
+    "chemotherapy",
+    "prognosis"
+]
 class ResponseOptimizer:
 
     def __init__(
         self,
-        max_chunks=4,
+        max_chunks=5,
         max_chunk_chars=1200
     ):
         self.max_chunks = max_chunks
@@ -100,9 +120,24 @@ class ResponseOptimizer:
 ):
 
         text = chunk["text"].lower()
-
+        
         score = 0
+        
+        
+        if analysis["intent"] == "diagnosis":
 
+            penalties = [
+                "pregnancy",
+                "chemotherapy",
+                "radiotherapy",
+                "management",
+                "stage iv"
+            ]
+
+            for word in penalties:
+
+                if word in text:
+                    score -= 15
         # -------------------
         # Keyword overlap
         # -------------------
@@ -123,6 +158,40 @@ class ResponseOptimizer:
 
             if entity.lower() in text:
                 score += 10
+                
+        # -------------------
+        # Definition boost
+        # -------------------
+
+        if analysis.get(
+            "intent"
+        ) == "diagnosis":
+
+            definition_terms = [
+
+                "is the",
+
+                "defined as",
+
+                "common cancer",
+
+                "malignant tumor",
+
+                "neoplasm",
+
+                "originates in",
+
+                "etiology",
+
+                "epidemiology"
+
+            ]
+
+            for term in definition_terms:
+
+                if term in text:
+
+                    score += 8
 
         # -------------------
         # Intent boost
@@ -148,14 +217,16 @@ class ResponseOptimizer:
     def rank_chunks(
         self,
         chunks,
-        query
+        query,
+        analysis
     ):
 
         ranked = sorted(
             chunks,
             key=lambda x: self.score_chunk(
                 x,
-                query
+                query,
+                analysis
             ),
             reverse=True
         )
@@ -174,7 +245,8 @@ class ResponseOptimizer:
     def optimize(
         self,
         chunks,
-        query
+        query,
+        analysis
     ):
 
         chunks = self.remove_duplicates(
@@ -185,9 +257,18 @@ class ResponseOptimizer:
             chunks
         )
 
+        chunks = [
+            chunk
+            for chunk in chunks
+            if not self.is_toc_chunk(
+                chunk["text"]
+            )
+        ]
+
         chunks = self.rank_chunks(
             chunks,
-            query
+            query,
+            analysis
         )
 
         chunks = chunks[
@@ -209,5 +290,27 @@ class ResponseOptimizer:
 
         return optimized
 
+
+    def is_toc_chunk(self, text):
+
+        text = text.lower()
+
+        toc_terms = [
+            "introduction",
+            "risk factors",
+            "prevention",
+            "staging",
+            "management",
+            "treatment",
+            "prognosis"
+        ]
+
+        count = sum(
+            1
+            for term in toc_terms
+            if term in text
+        )
+
+        return count >= 5
 
 optimizer = ResponseOptimizer()
