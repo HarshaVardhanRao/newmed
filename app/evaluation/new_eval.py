@@ -23,7 +23,9 @@ from bert_score import score
 from sklearn.metrics import ndcg_score
 
 from app.rag.pipeline import ask
-
+from app.evaluation.deep_eval import (
+            deep_evaluator
+        )
 
 smooth = SmoothingFunction().method1
 
@@ -51,7 +53,7 @@ def answer_f1(reference, prediction):
 def evaluate():
 
     with open(
-        "data/benchmark/oncology_qa.json",
+        "data/benchmark/bqa_10.json",
         "r",
         encoding="utf-8"
     ) as f:
@@ -123,6 +125,16 @@ def evaluate():
         docs = result[
             "retrieved_docs"
         ]
+        confidence = result.get(
+            "confidence",
+            0
+        )
+        deep_evaluator.evaluate_answer(
+            question=question,
+            answer=prediction,
+            contexts=docs,
+            confidence=confidence
+        )
 
         metrics["latency"] += latency
 
@@ -252,6 +264,10 @@ def evaluate():
         print(
             f"[{idx}/{n}] Completed"
         )
+        
+        
+
+
 
     report = {
 
@@ -329,6 +345,11 @@ def evaluate():
         "avg_latency_sec":
             metrics["latency"]/n
     }
+    
+        
+    report["deep_eval"] = (
+        deep_evaluator.summary()
+        )
 
     timestamp = datetime.now().strftime(
         "%Y%m%d_%H%M%S"

@@ -1,12 +1,14 @@
 from typing import Dict
-
+from app.rl.reward_model import (
+    reward_model
+)
 
 def plan_retrieval(
     analysis: Dict
 ):
 
     intent = analysis[
-        "intent"
+        "intent"    
     ]
 
     complexity = analysis[
@@ -31,6 +33,17 @@ def plan_retrieval(
 
         "semantic_weight": 0.6
     }
+    strategy = (
+        reward_model
+        .suggest_retrieval_depth(
+            analysis["intent"]
+        )
+    )
+
+    print(
+        "RL Strategy:",
+        strategy
+    )
 
     # ------------------
     # Intent Planning
@@ -121,5 +134,31 @@ def plan_retrieval(
     if emotion == "anxious":
 
         plan["candidate_pool"] += 5
+
+    # ------------------
+    # RL Adaptation
+    # ------------------
+
+    strategy = (
+        reward_model
+        .suggest_retrieval_depth(
+            analysis["intent"]
+        )
+    )
+
+    print(
+        "RL Strategy:",
+        strategy
+    )
+
+    plan["candidate_pool"] = max(
+        plan["candidate_pool"],
+        strategy["top_k"] * 4
+    )
+
+    plan["rerank_top_k"] = max(
+        plan["rerank_top_k"],
+        strategy["rerank_k"]
+    )
 
     return plan

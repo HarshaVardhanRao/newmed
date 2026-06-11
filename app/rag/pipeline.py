@@ -16,7 +16,9 @@ from app.agents.reflection_agent import (
 from app.agents.self_critique_agent import (
     self_critique_agent
 )
-
+from app.evaluation.scope_evaluator import (
+    scope_evaluator
+)
 from app.llm.generator import (
     generate_answer
 )
@@ -126,6 +128,14 @@ def ask(question: str):
         answer,
         confidence
     )
+    
+    scope_scores = (
+        scope_evaluator.evaluate(
+            question,
+            answer,
+            contexts
+        )
+    )
 
     print(
         "Generation:",
@@ -149,6 +159,7 @@ def ask(question: str):
     "analysis": analysis,
     "confidence": round(confidence, 2),
     "sources": verified_results,
+    "scope": scope_scores,
     "retrieved_docs": contexts
     }
 
