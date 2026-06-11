@@ -78,6 +78,8 @@ class DeepEvaluator:
                 for score in self.scope_scores
 
             ]
+            
+            print("VALUES:", key, values)
 
             metrics[key] = round(
                 mean(values),
