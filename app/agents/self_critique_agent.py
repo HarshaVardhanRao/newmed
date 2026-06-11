@@ -12,7 +12,7 @@ class SelfCritiqueAgent:
         confidence
     ):
 
-        if confidence >= 0.7:
+        if confidence >= 0.5:
             return answer
 
         prompt = f"""

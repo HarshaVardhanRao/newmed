@@ -1,8 +1,7 @@
 import json
 from statistics import mean
-
-from app.evaluation.scope_evaluator import (
-    scope_evaluator
+from app.agents.scope_agent import (
+    scope_agent
 )
 
 from app.rl.reward_model import (
@@ -30,13 +29,11 @@ class DeepEvaluator:
 
     ):
 
-        scope = (
-            scope_evaluator.evaluate(
+        scope = scope_agent.evaluate(
                 question,
                 answer,
                 contexts
             )
-        )
 
         self.scope_scores.append(
             scope

@@ -53,7 +53,7 @@ def answer_f1(reference, prediction):
 def evaluate():
 
     with open(
-        "data/benchmark/bqa_10.json",
+        "data/benchmark/oncology_qa.json",
         "r",
         encoding="utf-8"
     ) as f:

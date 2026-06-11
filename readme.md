@@ -1,101 +1,300 @@
-# MedIntel – Oncology RAG Assistant
+# MedIntel: Agentic Medical Oncology RAG System
 
 ## Overview
 
-MedIntel is a Retrieval-Augmented Generation (RAG) system designed for oncology-focused medical question answering. The system combines hybrid retrieval, reranking, and local Large Language Models (LLMs) to provide grounded, source-backed answers from oncology textbooks, clinical guidelines, and medical references.
+MedIntel is an Agentic Retrieval-Augmented Generation (RAG) system designed for oncology-focused medical question answering. The system combines hybrid retrieval, agent-based reasoning, reinforcement learning feedback, and automated evaluation to generate evidence-grounded medical responses from trusted oncology literature.
 
-The objective is to improve answer accuracy, reduce hallucinations, and provide transparent citations for medical information retrieval.
+The goal of MedIntel is to provide:
+
+* Accurate oncology information retrieval
+* Evidence-grounded answer generation
+* Reduced hallucinations
+* Explainable retrieval pipelines
+* Continuous improvement through feedback and reinforcement learning
 
 ---
 
-## Architecture
+# Architecture
 
 ```text
 User Question
       │
       ▼
-Hybrid Retriever
-(BM25 + Dense Retrieval)
+Query Analyzer Agent
+      │
+      ▼
+Query Expansion Agent
+      │
+      ▼
+Retrieval Planner Agent (RL Assisted)
+      │
+      ▼
+Hybrid Retrieval
+ ├── BM25 Search
+ └── Semantic Search
       │
       ▼
 Cross Encoder Reranker
       │
       ▼
-Top Relevant Chunks
+Response Optimizer Agent
       │
       ▼
-Prompt Construction
+Evidence Verifier Agent
       │
       ▼
-Local LLM (Ollama)
+LLM Generator
       │
       ▼
-Generated Answer
+Reflection Agent
       │
       ▼
-Sources + Evaluation
+Confidence Agent
+      │
+      ▼
+Final Answer
 ```
 
 ---
 
-## Features
+# Agentic Components
 
-### Retrieval
+## Query Analyzer Agent
 
-* BM25 lexical retrieval
-* ChromaDB vector search
-* BGE embeddings
-* Reciprocal Rank Fusion
-* Cross-Encoder reranking
+Analyzes incoming questions and extracts:
 
-### Models
+* Intent
+* Entities
+* Complexity
+* Emotion
 
-#### Embedding Model
+Example:
 
-```text
-BAAI/bge-small-en-v1.5
+```json
+{
+  "intent": "prognosis",
+  "entities": ["lung cancer"],
+  "complexity": "moderate",
+  "emotion": "neutral"
+}
 ```
 
-#### Reranker
+Supported intents:
+
+* Diagnosis
+* Treatment
+* Prognosis
+* Prevention
+* Side Effects
+* Support
+* General
+
+---
+
+## Query Expansion Agent
+
+Expands user questions with oncology-specific terminology.
+
+Example:
 
 ```text
-cross-encoder/ms-marco-MiniLM-L-6-v2
+What is breast cancer?
+
+↓
+
+What is breast cancer?
+breast cancer diagnosis staging classification pathology
 ```
 
 ---
 
-## Generation
+## Retrieval Planner Agent
 
-Local inference through Ollama.
+Dynamically adjusts retrieval parameters based on:
 
-Supported models:
+* Intent
+* Complexity
+* Emotion
+* Reinforcement Learning feedback
 
-```text
-qwen2.5:1.5b
-qwen3:8b
-llama3
-mistral
-```
+Example plan:
 
-Current default:
-
-```text
-qwen2.5:1.5b
+```json
+{
+  "bm25_k": 20,
+  "semantic_k": 25,
+  "candidate_pool": 40,
+  "rerank_top_k": 16
+}
 ```
 
 ---
 
-## Evaluation Metrics
+## Response Optimizer Agent
 
-### Retrieval Metrics
+Improves retrieval quality through:
+
+* Duplicate removal
+* Chunk ranking
+* Section-aware scoring
+* Context trimming
+* Table-of-contents filtering
+
+---
+
+## Evidence Verifier Agent
+
+Filters weak evidence before generation.
+
+Verification considers:
+
+* Entity matching
+* Intent alignment
+* Evidence density
+* Context quality
+
+---
+
+## Reflection Agent
+
+Performs self-review of generated answers.
+
+Responsibilities:
+
+* Detect unsupported claims
+* Improve grounding
+* Refine answer structure
+* Reduce hallucinations
+
+---
+
+## Confidence Agent
+
+Estimates answer reliability using:
+
+* Evidence coverage
+* Context volume
+* Entity coverage
+* Grounding quality
+
+Example:
+
+```json
+{
+  "confidence": 0.91
+}
+```
+
+---
+
+# Retrieval System
+
+## Hybrid Retrieval
+
+MedIntel combines:
+
+### BM25
+
+Traditional keyword retrieval.
+
+### Semantic Search
+
+Dense vector similarity search.
+
+### Cross Encoder Reranking
+
+Improves ranking quality by scoring query-document relevance.
+
+Current performance:
+
+```text
+Recall@5 = 1.00
+MRR = 1.00
+NDCG@5 = 1.00
+```
+
+---
+
+# Data Processing
+
+## Agentic Chunking
+
+Documents are processed into:
+
+* Sections
+* Paragraph-aware chunks
+* Context-preserving segments
+
+Chunk metadata:
+
+```json
+{
+  "chunk_id": "...",
+  "book": "...",
+  "page": 123,
+  "section": "Breast Cancer",
+  "text": "..."
+}
+```
+
+---
+
+# Reinforcement Learning Layer
+
+## Feedback Store
+
+Stores user feedback:
+
+```json
+{
+  "question": "...",
+  "intent": "diagnosis",
+  "reward": 0.82
+}
+```
+
+---
+
+## Reward Model
+
+Learns retrieval preferences from feedback.
+
+Example:
+
+```json
+{
+  "diagnosis": {
+    "avg_reward": 0.36,
+    "samples": 3
+  },
+  "prognosis": {
+    "avg_reward": 0.82,
+    "samples": 1
+  }
+}
+```
+
+Used by:
+
+* Retrieval Planner
+* Candidate Pool Selection
+* Reranking Depth
+
+---
+
+# Evaluation Framework
+
+## Retrieval Metrics
 
 * Precision@5
 * Recall@5
 * MRR
-* NDCG@5
-* HitRate@5
+* NDCG
+* HitRate
 
-### Lexical Generation Metrics
+---
+
+## Generation Metrics
 
 * BLEU-1
 * BLEU-2
@@ -105,321 +304,125 @@ qwen2.5:1.5b
 * ROUGE-2
 * ROUGE-L
 * METEOR
-* Answer-F1
+* Answer F1
+* BERTScore
 
-### Semantic Metrics
+---
 
-* BERTScore F1
-
-### RAG Metrics
+## RAG Metrics
 
 * Faithfulness
 * Context Relevancy
 * Answer Relevancy
 * Hallucination Rate
 
-### S.C.O.P.E LLM-as-a-Judge Metrics
-
-* Safety
-* Completeness
-* Originality
-* Precision
-* Efficiency
-
 ---
 
-## Project Structure
+## Deep Evaluation (SCOPE)
 
-```text
-newmed/
-│
-├── app/
-│   ├── ingestion/
-│   │   ├── pdf_loader.py
-│   │   ├── chunker.py
-│   │   └── build_chunks.py
-│   │
-│   ├── retrieval/
-│   │   ├── embeddings.py
-│   │   ├── vector_store.py
-│   │   ├── bm25_search.py
-│   │   └── hybrid_search.py
-│   │
-│   ├── reranking/
-│   │   └── reranker.py
-│   │
-│   ├── llm/
-│   │   ├── prompts.py
-│   │   ├── ollama_client.py
-│   │   └── generator.py
-│   │
-│   ├── rag/
-│   │   └── pipeline.py
-│   │
-│   ├── api/
-│   │   └── main.py
-│   │
-│   └── evaluation/
-│       └── new_eval.py
-│
-├── data/
-│   ├── books/
-│   ├── processed/
-│   └── benchmark/
-│
-├── chroma_db/
-├── results/
-├── streamlit_app.py
-├── requirements.txt
-└── README.md
-```
+Automated answer quality assessment.
 
----
+Dimensions:
 
-## Dataset
+### Safety
 
-Medical sources include:
+Medical safety of response.
 
-* Cancer Indian Guidelines
-* Basics of Oncology
-* MD Anderson Manual of Medical Oncology
-* Additional oncology textbooks
+### Completeness
 
-Processing pipeline:
+Coverage of user question.
 
-1. PDF Extraction
-2. Text Cleaning
-3. Chunking
-4. Embedding Generation
-5. ChromaDB Indexing
+### Originality
 
----
+Ability to synthesize information.
 
-## Chunking Strategy
+### Precision
 
-### Structure-Aware Chunking
+Specificity and correctness.
 
-Stored metadata:
+### Evidence
+
+Grounding in retrieved sources.
+
+Example:
 
 ```json
 {
-  "book": "Cancer Guidelines",
-  "page": 12,
-  "section": "Breast Cancer",
-  "chunk_id": "chunk_102"
-}
-```
-
-Configuration:
-
-```text
-Chunk Size : 450 words
-Overlap    : 75 words
-```
-
-Benefits:
-
-* Better retrieval quality
-* More accurate citations
-* Reduced hallucinations
-* Improved reranking
-
----
-
-## Installation
-
-### Create Virtual Environment
-
-```bash
-python -m venv venv
-```
-
-### Activate Environment
-
-Windows:
-
-```bash
-venv\Scripts\activate
-```
-
-Linux/macOS:
-
-```bash
-source venv/bin/activate
-```
-
----
-
-## Install Dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
----
-
-## Required Packages
-
-```bash
-pip install fastapi uvicorn streamlit chromadb sentence-transformers
-pip install rank-bm25 transformers torch nltk bert-score
-pip install rouge-score scikit-learn pydantic pypdf requests
-```
-
----
-
-## Ollama Setup
-
-Pull model:
-
-```bash
-ollama pull qwen2.5:1.5b
-```
-
-Start Ollama:
-
-```bash
-ollama serve
-```
-
-Verify installation:
-
-```bash
-ollama list
-```
-
----
-
-## Build Knowledge Base
-
-### Extract and Chunk PDFs
-
-```bash
-python -m app.ingestion.build_chunks
-```
-
-### Build Vector Database
-
-```bash
-python -m app.retrieval.vector_store
-```
-
----
-
-## Run FastAPI Server
-
-```bash
-uvicorn app.api.main:app --reload
-```
-
-Endpoint:
-
-```text
-POST /ask
-```
-
-Request:
-
-```json
-{
-  "question": "What is breast cancer?"
+  "Safety": 4.0,
+  "Completeness": 4.4,
+  "Originality": 2.6,
+  "Precision": 4.2,
+  "Evidence": 4.2
 }
 ```
 
 ---
 
-## Run Streamlit UI
+# Current Benchmark Results
 
-```bash
-streamlit run streamlit_app.py
+```json
+{
+  "Precision@5": 0.72,
+  "Recall@5": 1.00,
+  "MRR": 1.00,
+  "NDCG@5": 1.00,
+
+  "BERTScore": 0.853,
+
+  "Faithfulness": 0.853,
+
+  "Hallucination Rate": 0.147,
+
+  "Safety": 4.0,
+  "Completeness": 4.4,
+  "Precision": 4.2,
+  "Evidence": 4.2,
+
+  "Confidence": 0.91
+}
 ```
 
 ---
 
-## Run Evaluation
+# Technology Stack
 
-```bash
-python -m app.evaluation.new_eval
-```
+## Backend
 
-Outputs:
+* Python
 
-```text
-results/
-├── eval_TIMESTAMP.json
-└── eval_TIMESTAMP_details.json
-```
+## Retrieval
 
----
+* BM25
+* Sentence Transformers
+* Cross Encoder Reranker
 
-## Example Evaluation Output
+## LLM
 
-```text
-============================================================
-ONCOLOGY RAG COMPLETE EVALUATION
-============================================================
+* Ollama
+* Qwen Models
 
-Questions Evaluated: 200
+## Evaluation
 
-Retrieval
-----------------------------------------
-Precision@5: 0.6840
-Recall@5: 0.9750
-MRR: 0.8639
-NDCG@5: 0.8895
-HitRate@5: 0.9750
-
-Generation
-----------------------------------------
-BLEU-1: 0.2324
-BLEU-2: 0.1389
-BLEU-4: 0.0505
-GLEU: 0.0957
-ROUGE-1: 0.2877
-ROUGE-2: 0.1129
-ROUGE-L: 0.2267
-METEOR: 0.3583
-Answer-F1: 0.2309
-BERTScore F1: 0.9087
-
-Faithfulness & Relevance
-----------------------------------------
-Faithfulness: 0.6610
-Context Relevancy: 0.5051
-Answer Relevancy: 0.6275
-Hallucination Rate: 0.3390
-
-S.C.O.P.E LLM Judge
-----------------------------------------
-Safety: 3.49
-Completeness: 3.96
-Originality: 3.95
-Precision: 3.92
-Efficiency: 3.90
-Weighted Total: 3.80
-```
+* NLTK
+* ROUGE
+* BERTScore
+* Custom DeepEval
 
 ---
 
-## Future Improvements
+# Future Work
 
-* Knowledge Graph RAG
-* Agentic RAG
-* Query Rewriting
-* Multi-hop Retrieval
-* Medical NER
-* Citation Highlighting
-* Quantized GPU Models
-* Fine-Tuned Medical LLMs
-* Clinical Trial Retrieval
-* Drug Interaction Analysis
+* Intent-specific answer templates
+* Reflection gating for latency reduction
+* Evaluation caching
+* Multi-hop reasoning
+* Citation generation
+* Medical knowledge graph integration
+* Production API deployment
+* Web UI
 
 ---
 
-## Author
+# Disclaimer
 
-**Harsha Vardhan Rao**
-
-Medical AI • Retrieval-Augmented Generation • FastAPI • NLP • LLM Engineering
-
-**Project:** MedIntel – Oncology Retrieval-Augmented Generation System
+MedIntel is a research and educational system designed for oncology information retrieval and question answering. It is not intended to replace professional medical advice, diagnosis, or treatment.

@@ -4,6 +4,9 @@ from app.retrieval.hybrid_search import (
 from app.agents.confidence_agent import (
     confidence_agent
 )
+from app.agents.empathy_agent import (
+    empathy_agent
+)
 
 from app.agents.evidence_verifier import (
     verifier
@@ -93,42 +96,56 @@ def ask(question: str):
         "After Verification:",
         len(verified_results)
     )
+
+    contexts = [
+        r["text"]
+        for r in verified_results
+    ]
+
+    # Generate first
+
+    generation_start = time.time()
+    
+    answer = generate_answer(
+        question,
+        contexts,
+        analysis
+    )
+    print("Generation:", round(time.time()-generation_start,2))
+
+    answer = empathy_agent.apply(
+        answer,
+        analysis
+    )
     confidence = confidence_agent.score(
-        analysis,
-        retrieved_results,
-        verified_results
+        verified_results,
+        answer,
+        analysis
     )
     
     print(
         "Confidence:",
         confidence
     )
-    contexts = [
-        r["text"]
-        for r in verified_results
-    ]
-
-    start = time.time()
-
-    # Generate first
-    answer = generate_answer(
-        question,
-        contexts,
-        analysis
-    )
-
     # Then reflect
+
+    reflection_start = time.time()
     answer = reflector.reflect(
         question,
         answer,
         contexts
     )
+    print("Reflection:", round(time.time()-reflection_start,2))
+
+    self_critique_agent_start = time.time()
     answer = self_critique_agent.critique(
         question,
         answer,
         confidence
     )
-    
+    print("Self Critique:", round(time.time()-self_critique_agent_start,2))
+
+    scope_start = time.time()
     scope_scores = (
         scope_evaluator.evaluate(
             question,
@@ -136,12 +153,9 @@ def ask(question: str):
             contexts
         )
     )
+    print("Reflection:", round(time.time()-scope_start,2))
 
-    print(
-        "Generation:",
-        round(time.time() - start, 2),
-        "sec"
-    )
+    
     print("\nRETRIEVED CONTEXTS\n")
 
     for i, c in enumerate(contexts, start=1):

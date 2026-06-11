@@ -1,5 +1,4 @@
 from app.llm.ollama_client import call_ollama
-from app.llm.prompts import SYSTEM_PROMPT
 
 
 def generate_answer(
@@ -10,7 +9,8 @@ def generate_answer(
 
     context_text = ""
 
-    MAX_CHARS = 2500
+    MAX_CHARS = 2000
+
     for idx, chunk in enumerate(
         contexts[:4],
         start=1
@@ -22,77 +22,108 @@ def generate_answer(
         )
 
     print(
-        f"Context count: {min(len(contexts),3)}"
+        f"Context count: {min(len(contexts),4)}"
     )
 
     print(
         f"Context chars: {len(context_text)}"
     )
+
     intent = analysis.get(
         "intent",
         "general"
     )
 
-    if intent == "diagnosis":
+    # -------------------
+    # Answer Planner
+    # -------------------
 
-        answer_style = """
-Start with a clear definition.
-Then explain important characteristics.
-Then mention incidence or risk factors if available.
+    PLANS = {
+
+        "diagnosis": """
+1. Definition
+2. Key Characteristics
+3. Risk Factors (only if present)
+""",
+
+        "treatment": """
+1. Standard Treatment
+2. Treatment Options
+3. Important Notes
+""",
+
+        "prognosis": """
+1. Prognosis
+2. Factors Affecting Outcome
+3. Survival or Recurrence Information
+""",
+
+        "side_effects": """
+1. Common Side Effects
+2. Serious Side Effects
+3. Monitoring Considerations
+""",
+
+        "prevention": """
+1. Prevention Methods
+2. Screening
+3. Risk Reduction
+""",
+
+        "support": """
+1. Acknowledge Concern
+2. Provide Relevant Information
+3. Encourage Medical Follow-up
 """
+    }
 
-    elif intent == "treatment":
-
-        answer_style = """
-    Focus on treatment options.
-    Mention therapies and management strategies.
-    """
-
-    elif intent == "prognosis":
-
-        answer_style = """
-    Focus on survival, outcomes, recurrence,
-    and prognosis-related information.
-    """
-
-    else:
-
-        answer_style = """
-    Answer directly using the provided evidence.
-    """
+    answer_plan = PLANS.get(
+        intent,
+        """
+1. Direct Answer
+2. Supporting Information
+"""
+    )
 
     prompt = f"""
 You are a medical oncology assistant.
 
 RULES:
 
-Use ONLY information explicitly present in CONTEXT.
+1. Use ONLY information explicitly present in CONTEXT.
 
-Do NOT infer missing facts.
+2. Do NOT use outside knowledge.
 
-Do NOT add risk factors,
-genes,
-treatments,
-survival statistics,
-or pathology details
-unless directly mentioned.
+3. Do NOT invent:
+   - risk factors
+   - genes
+   - treatments
+   - survival statistics
+   - pathology findings
 
-If a fact is not explicitly stated,
-write:
+4. If information is missing, write:
 
-"Not mentioned in provided sources."
+   "Not mentioned in provided sources."
 
-ANSWER STYLE:
-{answer_style}
+5. Follow the ANSWER PLAN.
+
+6. Prefer concise evidence-grounded answers.
 
 QUESTION:
 {question}
+
+INTENT:
+{intent}
+
+ANSWER PLAN:
+{answer_plan}
 
 CONTEXT:
 {context_text}
 
 ANSWER:
 """
+
     print("\n")
     print("=" * 80)
     print("CONTEXT SENT TO LLM")

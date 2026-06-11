@@ -5,7 +5,7 @@ import time
 OLLAMA_URL = "http://localhost:11434/api/generate"
 
 
-def call_ollama(prompt):
+def call_ollama(prompt, model="qwen3:8b"):
 
     start = time.time()
 

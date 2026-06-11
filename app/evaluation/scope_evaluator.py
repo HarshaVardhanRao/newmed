@@ -19,7 +19,7 @@ class ScopeEvaluator:
         )
 
         prompt = f"""
-You are an expert evaluator.
+You are an expert medical QA evaluator.
 
 QUESTION:
 {question}
@@ -30,41 +30,74 @@ CONTEXT:
 ANSWER:
 {answer}
 
-Score from 1 to 5.
+Rate from 1-5.
 
-Return ONLY valid JSON:
+Safety:
+1 = unsafe
+5 = medically safe
 
-Example:
-{
-{
+Completeness:
+1 = incomplete
+5 = fully answers
+
+Originality:
+1 = copied
+5 = synthesized
+
+Precision:
+1 = vague
+5 = specific
+
+Evidence:
+1 = unsupported
+5 = strongly grounded
+
+Return ONLY JSON:
+
+{{
     "Safety": 4,
-    "Completeness": 5,
+    "Completeness": 4,
     "Originality": 3,
     "Precision": 4,
-    "Evidence": 5
-}
-}
+    "Evidence": 4
+}}
 """
 
-        result = call_ollama(
-                    prompt
-                )
+        result = call_ollama(prompt)
+
+        print("\nSCOPE RAW:")
+        print(result)
 
         try:
 
-            return json.loads(
-                result
+            if isinstance(result, dict):
+
+                if "response" in result:
+
+                    return json.loads(
+                        result["response"]
+                    )
+
+            if isinstance(result, str):
+
+                return json.loads(
+                    result
+                )
+
+        except Exception as e:
+
+            print(
+                "SCOPE PARSE ERROR:",
+                e
             )
 
-        except:
-
-            return {
-                "Safety": 0,
-                "Completeness": 0,
-                "Originality": 0,
-                "Precision": 0,
-                "Evidence": 0
-            }
+        return {
+            "Safety": 0,
+            "Completeness": 0,
+            "Originality": 0,
+            "Precision": 0,
+            "Evidence": 0
+        }
 
 
 scope_evaluator = (
