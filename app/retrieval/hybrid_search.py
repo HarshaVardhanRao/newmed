@@ -12,7 +12,9 @@ from app.agents.query_analyzer import (
 from app.agents.retrieval_planner import (
     plan_retrieval
 )
-
+from app.agents.query_expander import (
+    expand_query
+)
 
 
 
@@ -67,6 +69,8 @@ class HybridRetriever:
 
         analysis = analyze_query(query)
 
+
+
         print(
             f"Intent: {analysis['intent']}"
         )
@@ -77,6 +81,16 @@ class HybridRetriever:
 
         print(
             f"Emotion: {analysis['emotion']}"
+        )
+
+        expanded_query = expand_query(
+            query,
+            analysis
+        )
+
+        print(
+            "Expanded Query:",
+            expanded_query
         )
 
         intent = analysis["intent"]
@@ -111,14 +125,14 @@ class HybridRetriever:
 
 
         bm25_results = self.bm25.search(
-            query,
+            expanded_query,
             top_k=bm25_k
         )
         print("BM25:", round(time.time() - start, 2), "sec")
 
         start = time.time()
         semantic_results = self.semantic_search(
-            query,
+            expanded_query,
             top_k=semantic_k
         )
         print("Semantic:", round(time.time() - start, 2), "sec")
@@ -187,10 +201,46 @@ class HybridRetriever:
             item["data"]
             for item in final_results[:candidate_pool]
         ]
+        # ------------------------
+        # Entity Filtering
+        # ------------------------
+
+        entities = analysis.get(
+            "entities",
+            []
+        )
+
+        filtered_candidates = []
+
+        for chunk in candidates:
+
+            text = chunk["text"].lower()
+
+            for entity in entities:
+
+                if entity.lower() in text:
+
+                    filtered_candidates.append(
+                        chunk
+                    )
+
+                    break
+
+        # Use filtered results only if enough exist
+
+        if len(filtered_candidates) >= 5:
+
+            print(
+                f"Entity Filter: "
+                f"{len(filtered_candidates)} "
+                f"chunks matched"
+            )
+
+            candidates = filtered_candidates
 
         start = time.time()
         reranked = rerank(
-            query=query,
+            query=expanded_query,
             chunks=candidates,
             top_k=rerank_top_k
         )

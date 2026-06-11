@@ -9,8 +9,7 @@ def generate_answer(
 
     context_text = ""
 
-    MAX_CHARS = 800
-
+    MAX_CHARS = 2500
     for idx, chunk in enumerate(
         contexts[:4],
         start=1
@@ -34,12 +33,12 @@ You are a medical oncology assistant.
 
 RULES:
 
-1. Use ONLY information present in CONTEXT.
-2. Do NOT use outside knowledge.
-3. If answer is not found, say:
-   "Information not found in provided sources."
-4. Be concise.
-5. Quote specific facts from context.
+1. Use ONLY the provided context.
+2. Summarize relevant information found in the context.
+3. If the answer is partially available, provide the partial answer.
+4. Combine information from multiple sources when needed.
+5. Only say "Information not found in provided sources"
+   if absolutely no relevant information exists.
 
 QUESTION:
 {question}
@@ -49,4 +48,11 @@ CONTEXT:
 
 ANSWER:
 """
+    print("\n")
+    print("=" * 80)
+    print("CONTEXT SENT TO LLM")
+    print("=" * 80)
+    print(context_text[:5000])
+    print("=" * 80)
+
     return call_ollama(prompt)

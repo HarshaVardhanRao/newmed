@@ -1,6 +1,4 @@
-from typing import List
 from pydantic import BaseModel
-
 from app.utils.text_cleaner import clean_text
 
 from app.ingestion.agentic_chunker import (
@@ -10,39 +8,12 @@ from app.ingestion.agentic_chunker import (
 
 
 class Chunk(BaseModel):
+
     chunk_id: str
     book: str
     page: int
+    section: str
     text: str
-
-
-def chunk_text(
-    text: str,
-    chunk_size: int = 500,
-    overlap: int = 200
-):
-
-    words = text.split()
-
-    chunks = []
-
-    start = 0
-
-    while start < len(words):
-
-        end = start + chunk_size
-
-        chunk = " ".join(
-            words[start:end]
-        )
-
-        chunks.append(chunk)
-
-        start += (
-            chunk_size - overlap
-        )
-
-    return chunks
 
 
 def create_chunks(documents):
@@ -57,57 +28,63 @@ def create_chunks(documents):
             doc["text"]
         )
 
-        # ------------------------
-        # Agentic Chunking
-        # ------------------------
+        sections = split_into_sections(text)
+        if chunk_counter == 1:
+            print("\nRAW PAGE TEXT")
+            print("=" * 80)
+            print(text[:2000])
+            print("=" * 80)
+        if chunk_counter < 20:
+            print("\n" + "="*80)
+            print("PAGE:", doc["page"])
+            print("FIRST 500 CHARS:")
+            print(text[:500])
 
-        sections = split_into_sections(
-            text
-        )
+            print("\nSECTIONS FOUND:")
+            for s in sections[:10]:
+                print("TITLE:", s[0])
 
-        text_chunks = []
+        for section_title, section_text in sections:
 
-        for section in sections:
+            chunks = chunk_section(
+                section_text
+            )
 
-            text_chunks.extend(
-                chunk_section(
-                    section,
-                    chunk_size=400,
-                    overlap=50
+            for chunk in chunks:
+
+                if len(
+                    chunk.split()
+                ) < 50:
+                    continue
+
+                chunk_text = (
+                    f"SECTION: {section_title}\n\n"
+                    f"{chunk}"
                 )
-            )
 
-        # ------------------------
-        # Save chunks
-        # ------------------------
+                all_chunks.append(
 
-        for chunk in text_chunks:
+                    Chunk(
 
-            if len(
-                chunk.split()
-            ) < 50:
-                continue
+                        chunk_id=
+                        f"chunk_{chunk_counter}",
 
-            all_chunks.append(
+                        book=
+                        doc["book"],
 
-                Chunk(
+                        page=
+                        doc["page"],
 
-                    chunk_id=
-                    f"chunk_{chunk_counter}",
+                        section=
+                        section_title,
 
-                    book=
-                    doc["book"],
+                        text=
+                        chunk_text
 
-                    page=
-                    doc["page"],
+                    ).model_dump()
 
-                    text=
-                    chunk
+                )
 
-                ).model_dump()
-
-            )
-
-            chunk_counter += 1
+                chunk_counter += 1
 
     return all_chunks

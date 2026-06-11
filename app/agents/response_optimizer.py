@@ -1,6 +1,46 @@
 import re
 
+SECTION_BOOSTS = {
 
+    "diagnosis": [
+        "definition",
+        "overview",
+        "introduction",
+        "epidemiology",
+        "etiology",
+        "pathology"
+    ],
+
+    "treatment": [
+        "treatment",
+        "management",
+        "therapy",
+        "chemotherapy",
+        "radiotherapy",
+        "immunotherapy"
+    ],
+
+    "prognosis": [
+        "prognosis",
+        "survival",
+        "outcome",
+        "mortality",
+        "recurrence"
+    ],
+
+    "prevention": [
+        "prevention",
+        "screening",
+        "risk reduction"
+    ],
+
+    "side_effects": [
+        "toxicity",
+        "side effects",
+        "adverse effects",
+        "complications"
+    ]
+}
 class ResponseOptimizer:
 
     def __init__(
@@ -53,23 +93,55 @@ class ResponseOptimizer:
         return filtered
 
     def score_chunk(
-        self,
-        chunk,
-        query
-    ):
+    self,
+    chunk,
+    question,
+    analysis
+):
 
         text = chunk["text"].lower()
 
-        query_words = set(
-            query.lower().split()
-        )
-
         score = 0
 
-        for word in query_words:
+        # -------------------
+        # Keyword overlap
+        # -------------------
+
+        for word in question.lower().split():
 
             if word in text:
                 score += 1
+
+        # -------------------
+        # Entity boost
+        # -------------------
+
+        for entity in analysis.get(
+            "entities",
+            []
+        ):
+
+            if entity.lower() in text:
+                score += 10
+
+        # -------------------
+        # Intent boost
+        # -------------------
+
+        intent = analysis.get(
+            "intent",
+            "general"
+        )
+
+        boosts = SECTION_BOOSTS.get(
+            intent,
+            []
+        )
+
+        for keyword in boosts:
+
+            if keyword in text:
+                score += 5
 
         return score
 
